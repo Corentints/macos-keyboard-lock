@@ -1,0 +1,15 @@
+name: CI
+
+# Checks that the app builds on every push and pull request.
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-26 # Xcode 26 SDK, required for Liquid Glass APIs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build app bundle
+        run: ./scripts/build-app.sh
