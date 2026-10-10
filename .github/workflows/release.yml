@@ -1,0 +1,36 @@
+name: Release
+
+# Publishes a GitHub Release with the .dmg whenever a version tag is pushed:
+#   git tag v1.0.0 && git push origin v1.0.0
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # needed to create the release
+
+jobs:
+  release:
+    runs-on: macos-26 # Xcode 26 SDK, required for Liquid Glass APIs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute version from tag (v1.2.3 -> 1.2.3)
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Build app bundle
+        run: ./scripts/build-app.sh
+
+      - name: Package .dmg
+        run: ./scripts/make-dmg.sh
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "build/KeyboardLock-$VERSION.dmg" \
+            "build/KeyboardLock-$VERSION.dmg.sha256" \
+            --title "KeyboardLock $VERSION" \
+            --generate-notes \
+            --notes-file .github/release-notes.md
